@@ -1,0 +1,8 @@
+.git
+.env
+.env.local
+vendor/
+var/
+docker-compose.yml
+phpunit.xml.dist
+tests/

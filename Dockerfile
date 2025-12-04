@@ -6,8 +6,11 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libicu-dev \
     libzip-dev \
+    libpq-dev \
     && docker-php-ext-install \
+    pdo \
     pdo_mysql \
+    pdo_pgsql \
     intl \
     zip \
     opcache
