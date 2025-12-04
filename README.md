@@ -1,58 +1,60 @@
 # Task 4 PHP - User Management System
 
-This is a Symfony 6/7 application for user management with authentication, blocking, and deletion capabilities.
+## User Management App (Symfony 6/7)
+This is my project for user management. It use Symfony 6/7 and have authentication, blocking and deleting users features.
 
-## Requirements
+Requirements
+PHP version 8.1 or more
 
-*   PHP 8.1 or higher
-*   Composer
-*   MySQL or PostgreSQL
+Composer
 
-## Setup Instructions
+MySQL or PostgreSQL
 
-1.  **Install Dependencies:**
-    ```bash
-    composer install
-    ```
+## How to Install
+1. Install Dependencies First you need to install packages with composer:
 
-2.  **Configure Database:**
-    Edit the `.env` file and set your `DATABASE_URL`.
-    ```dotenv
-    DATABASE_URL="mysql://root:password@127.0.0.1:3306/task4php?serverVersion=8.0.32&charset=utf8mb4"
-    ```
+Bash
 
-3.  **Create Database and Migrations:**
-    ```bash
-    php bin/console doctrine:database:create
-    php bin/console make:migration
-    php bin/console doctrine:migrations:migrate
-    ```
-    *Note: The migration will automatically create the UNIQUE INDEX on the email column as defined in the User entity.*
+composer install
+## 2. Database Configuration Open .env file and change DATABASE_URL with your database info.
 
-4.  **Run the Application:**
-    ```bash
-    php -S localhost:8000 -t public
-    ```
-    Or use the Symfony CLI:
-    ```bash
-    symfony server:start
-    ```
+Фрагмент кода
 
-## Features
+DATABASE_URL="mysql://root:password@127.0.0.1:3306/task4php?serverVersion=8.0.32&charset=utf8mb4"
+## 3. Create Database and Tables Run this commands to make database work:
 
-*   **Authentication:** Login and Registration.
-*   **Security:**
-    *   Blocked users cannot login.
-    *   Blocked/Deleted users are immediately logged out on their next request.
-    *   Unique email constraint enforced at the database level.
-*   **User Management:**
-    *   List users with sorting.
-    *   Bulk actions: Block, Unblock, Delete.
-    *   Status badges and relative timestamps.
+Bash
 
-## Deployment
+php bin/console doctrine:database:create
+php bin/console make:migration
+php bin/console doctrine:migrations:migrate
+Note: The migration will create unique index for email automatically.
 
-To deploy to a provider like Render or Heroku:
-1.  Ensure `APP_ENV=prod` in your environment variables.
-2.  Run `composer install --no-dev --optimize-autoloader`.
-3.  Run migrations on the production database.
+## 4. Start the Server To run application use this:
+
+Bash
+
+php -S localhost:8000 -t public
+Or if you use Symfony CLI:
+
+Bash
+
+symfony server:start
+Features
+Auth: Can Login and Registration.
+
+Security:
+
+Blocked users can not login to system.
+
+If user is blocked or deleted, he is logged out immediately in next request.
+
+Email is unique in database (cannot duplicate).
+
+User Management:
+
+List of users with sorting.
+
+Bulk actions: Can Block, Unblock, Delete many users at same time.
+
+Show status and time.
