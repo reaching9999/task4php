@@ -27,6 +27,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy project files
 COPY . .
 
+# Remove Windows-generated composer.lock to avoid platform mismatches
+RUN rm -f composer.lock
+
 # Create var directory (since it is ignored in .dockerignore)
 RUN mkdir -p var
 
