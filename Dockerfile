@@ -35,5 +35,13 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf.conf
 
+# Create entrypoint script to run migrations on startup
+RUN echo '#!/bin/bash' > /docker-entrypoint.sh \
+    && echo 'php bin/console doctrine:migrations:migrate --no-interaction' >> /docker-entrypoint.sh \
+    && echo 'exec apache2-foreground' >> /docker-entrypoint.sh \
+    && chmod +x /docker-entrypoint.sh
+
 # Port
 EXPOSE 80
+
+CMD ["/docker-entrypoint.sh"]
