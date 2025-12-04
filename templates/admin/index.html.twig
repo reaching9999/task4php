@@ -1,0 +1,147 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}User Management{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>User Management</h1>
+    <div>
+        Hello, {{ app.user.name }}! 
+        <a href="{{ path('app_logout') }}" class="btn btn-link">Logout</a>
+    </div>
+</div>
+
+<form action="{{ path('app_admin_bulk_action') }}" method="post" id="bulkActionForm">
+    <div class="toolbar mb-2 p-2 bg-light border rounded d-flex gap-2">
+        <button type="submit" name="action" value="block" class="btn btn-danger" id="btnBlock" disabled>
+            <i class="bi bi-lock-fill"></i> Block
+        </button>
+        <button type="submit" name="action" value="unblock" class="btn btn-secondary" id="btnUnblock" title="Unblock" disabled>
+            <i class="bi bi-unlock-fill"></i>
+        </button>
+        <button type="submit" name="action" value="delete" class="btn btn-danger" id="btnDelete" title="Delete" disabled>
+            <i class="bi bi-trash-fill"></i>
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col" style="width: 40px;">
+                        <input type="checkbox" class="form-check-input" id="selectAll">
+                    </th>
+                    <th scope="col">
+                        <a href="{{ path('app_admin_index', {'sort': 'name', 'direction': current_sort == 'name' and current_direction == 'ASC' ? 'DESC' : 'ASC'}) }}" class="text-decoration-none text-dark">
+                            Name
+                            {% if current_sort == 'name' %}
+                                <i class="bi bi-arrow-{{ current_direction == 'ASC' ? 'up' : 'down' }}"></i>
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th scope="col">
+                        <a href="{{ path('app_admin_index', {'sort': 'email', 'direction': current_sort == 'email' and current_direction == 'ASC' ? 'DESC' : 'ASC'}) }}" class="text-decoration-none text-dark">
+                            Email
+                            {% if current_sort == 'email' %}
+                                <i class="bi bi-arrow-{{ current_direction == 'ASC' ? 'up' : 'down' }}"></i>
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th scope="col">
+                        <a href="{{ path('app_admin_index', {'sort': 'status', 'direction': current_sort == 'status' and current_direction == 'ASC' ? 'DESC' : 'ASC'}) }}" class="text-decoration-none text-dark">
+                            Status
+                            {% if current_sort == 'status' %}
+                                <i class="bi bi-arrow-{{ current_direction == 'ASC' ? 'up' : 'down' }}"></i>
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th scope="col">
+                        <a href="{{ path('app_admin_index', {'sort': 'lastLoginTime', 'direction': current_sort == 'lastLoginTime' and current_direction == 'ASC' ? 'DESC' : 'ASC'}) }}" class="text-decoration-none text-dark">
+                            Last Login
+                            {% if current_sort == 'lastLoginTime' %}
+                                <i class="bi bi-arrow-{{ current_direction == 'ASC' ? 'up' : 'down' }}"></i>
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th scope="col">
+                        <a href="{{ path('app_admin_index', {'sort': 'registrationTime', 'direction': current_sort == 'registrationTime' and current_direction == 'ASC' ? 'DESC' : 'ASC'}) }}" class="text-decoration-none text-dark">
+                            Registered
+                            {% if current_sort == 'registrationTime' %}
+                                <i class="bi bi-arrow-{{ current_direction == 'ASC' ? 'up' : 'down' }}"></i>
+                            {% endif %}
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="users[]" value="{{ user.id }}" class="form-check-input user-checkbox">
+                        </td>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if user.status == 'active' %}
+                                <span class="badge bg-success">Active</span>
+                            {% elseif user.status == 'blocked' %}
+                                <span class="badge bg-danger">Blocked</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Unverified</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.lastLoginTime %}
+                                {{ user.lastLoginTime|date('Y-m-d H:i') }}
+                            {% else %}
+                                <span class="text-muted">Never</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.registrationTime|date('Y-m-d H:i') }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">No users found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        const btnBlock = document.getElementById('btnBlock');
+        const btnUnblock = document.getElementById('btnUnblock');
+        const btnDelete = document.getElementById('btnDelete');
+
+        function updateButtons() {
+            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+            btnBlock.disabled = !anyChecked;
+            btnUnblock.disabled = !anyChecked;
+            btnDelete.disabled = !anyChecked;
+        }
+
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateButtons();
+        });
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                updateButtons();
+                // If any checkbox is unchecked, uncheck "Select All"
+                if (!this.checked) {
+                    selectAll.checked = false;
+                }
+                // If all are checked, check "Select All"
+                if (Array.from(checkboxes).every(c => c.checked)) {
+                    selectAll.checked = true;
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
