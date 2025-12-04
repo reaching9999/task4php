@@ -7,13 +7,17 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libzip-dev \
     libpq-dev \
+    libonig-dev \
+    libxml2-dev \
     && docker-php-ext-install \
     pdo \
     pdo_mysql \
     pdo_pgsql \
     intl \
     zip \
-    opcache
+    opcache \
+    mbstring \
+    xml
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -35,6 +39,7 @@ RUN mkdir -p var
 
 # Install PHP dependencies
 ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV COMPOSER_MEMORY_LIMIT=-1
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Set permissions
