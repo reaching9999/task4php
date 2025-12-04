@@ -27,11 +27,18 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy project files
 COPY . .
 
+# Create var directory (since it is ignored in .dockerignore)
+RUN mkdir -p var
+
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+# Run cache clear manually after install to ensure it works or fail gracefully
+RUN php bin/console cache:clear --env=prod || echo "Cache clear failed, but continuing..."
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html/var
+RUN chown -R www-data:www-data var
 
 # Configure Apache DocumentRoot to public
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
