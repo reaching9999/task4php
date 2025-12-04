@@ -34,9 +34,6 @@ RUN mkdir -p var
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Run cache clear manually after install to ensure it works or fail gracefully
-RUN php bin/console cache:clear --env=prod || echo "Cache clear failed, but continuing..."
-
 # Set permissions
 RUN chown -R www-data:www-data var
 
@@ -45,8 +42,10 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf.conf
 
-# Create entrypoint script to run migrations on startup
+# Create entrypoint script to run migrations and cache clear on startup
 RUN echo '#!/bin/bash' > /docker-entrypoint.sh \
+    && echo 'php bin/console cache:clear' >> /docker-entrypoint.sh \
+    && echo 'php bin/console assets:install public' >> /docker-entrypoint.sh \
     && echo 'php bin/console doctrine:migrations:migrate --no-interaction' >> /docker-entrypoint.sh \
     && echo 'exec apache2-foreground' >> /docker-entrypoint.sh \
     && chmod +x /docker-entrypoint.sh
