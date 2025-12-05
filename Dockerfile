@@ -51,16 +51,18 @@ ENV COMPOSER_MEMORY_LIMIT=-1
 RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist --no-progress
 
 # Create var directory
-RUN mkdir -p var/cache var/log
+RUN mkdir -p var/cache/prod var/log
 
-# Set permissions
-RUN chown -R www-data:www-data var
+# Set permissions - make var writable by everyone
+RUN chmod -R 777 var
 
 # Create entrypoint script
 RUN echo '#!/bin/bash' > /docker-entrypoint.sh \
-    && echo 'php bin/console cache:clear' >> /docker-entrypoint.sh \
-    && echo 'php bin/console assets:install public' >> /docker-entrypoint.sh \
-    && echo 'php bin/console doctrine:migrations:migrate --no-interaction' >> /docker-entrypoint.sh \
+    && echo 'chmod -R 777 /var/www/html/var' >> /docker-entrypoint.sh \
+    && echo 'php bin/console cache:clear || true' >> /docker-entrypoint.sh \
+    && echo 'php bin/console cache:warmup || true' >> /docker-entrypoint.sh \
+    && echo 'php bin/console assets:install public || true' >> /docker-entrypoint.sh \
+    && echo 'php bin/console doctrine:migrations:migrate --no-interaction || true' >> /docker-entrypoint.sh \
     && echo 'exec apache2-foreground' >> /docker-entrypoint.sh \
     && chmod +x /docker-entrypoint.sh
 
