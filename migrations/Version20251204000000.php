@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DoctrineMigrations;
 
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\Migrations\AbstractMigration;
 
 final class Version20251204000000 extends AbstractMigration
@@ -16,19 +17,21 @@ final class Version20251204000000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // Detect database platform and use appropriate syntax
-        $platform = $this->connection->getDatabasePlatform()->getName();
-        
-        if ($platform === 'postgresql') {
-            $this->addSql('CREATE TABLE users (id SERIAL PRIMARY KEY, email VARCHAR(180) NOT NULL UNIQUE, roles JSON NOT NULL, password VARCHAR(255) NOT NULL, name VARCHAR(255) NOT NULL, status VARCHAR(20) NOT NULL, registration_time TIMESTAMP NOT NULL, last_login_time TIMESTAMP DEFAULT NULL)');
-            $this->addSql('CREATE UNIQUE INDEX UNIQ_IDENTIFIER_EMAIL ON users (email)');
-        } else {
-            $this->addSql('CREATE TABLE users (id INT AUTO_INCREMENT NOT NULL, email VARCHAR(180) NOT NULL, roles JSON NOT NULL, password VARCHAR(255) NOT NULL, name VARCHAR(255) NOT NULL, status VARCHAR(20) NOT NULL, registration_time DATETIME NOT NULL, last_login_time DATETIME DEFAULT NULL, UNIQUE INDEX UNIQ_IDENTIFIER_EMAIL (email), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        }
+        $tbl = $schema->createTable('users');
+        $tbl->addColumn('id', Types::INTEGER, ['autoincrement' => true]);
+        $tbl->addColumn('email', Types::STRING, ['length' => 180]);
+        $tbl->addColumn('roles', Types::JSON);
+        $tbl->addColumn('password', Types::STRING, ['length' => 255]);
+        $tbl->addColumn('name', Types::STRING, ['length' => 255]);
+        $tbl->addColumn('status', Types::STRING, ['length' => 20]);
+        $tbl->addColumn('registration_time', Types::DATETIME_MUTABLE);
+        $tbl->addColumn('last_login_time', Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $tbl->setPrimaryKey(['id']);
+        $tbl->addUniqueIndex(['email'], 'UNIQ_IDENTIFIER_EMAIL');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('DROP TABLE users');
+        $schema->dropTable('users');
     }
 }

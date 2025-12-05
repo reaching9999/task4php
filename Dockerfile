@@ -66,11 +66,14 @@ RUN chmod -R 777 var
 
 # Create entrypoint script
 RUN echo '#!/bin/bash' > /docker-entrypoint.sh \
+    && echo 'set -e' >> /docker-entrypoint.sh \
     && echo 'chmod -R 777 /var/www/html/var' >> /docker-entrypoint.sh \
-    && echo 'php bin/console cache:clear || true' >> /docker-entrypoint.sh \
+    && echo 'php bin/console cache:clear --no-warmup || true' >> /docker-entrypoint.sh \
     && echo 'php bin/console cache:warmup || true' >> /docker-entrypoint.sh \
     && echo 'php bin/console assets:install public || true' >> /docker-entrypoint.sh \
-    && echo 'php bin/console doctrine:migrations:migrate --no-interaction || true' >> /docker-entrypoint.sh \
+    && echo '# Reset migrations table and re-run if there was a failure' >> /docker-entrypoint.sh \
+    && echo 'php bin/console doctrine:migrations:sync-metadata-storage || true' >> /docker-entrypoint.sh \
+    && echo 'php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration || true' >> /docker-entrypoint.sh \
     && echo 'exec apache2-foreground' >> /docker-entrypoint.sh \
     && chmod +x /docker-entrypoint.sh
 
