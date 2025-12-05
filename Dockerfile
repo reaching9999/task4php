@@ -40,17 +40,15 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy composer files first
-COPY composer.json ./
+# Copy project files
+COPY . .
 
-# Remove lock file if it exists to force Linux resolution
+# Remove Windows-generated lock file
 RUN rm -f composer.lock
 
 # Install dependencies
+ENV COMPOSER_MEMORY_LIMIT=-1
 RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist --no-progress
-
-# Copy the rest of the application
-COPY . .
 
 # Create var directory
 RUN mkdir -p var/cache var/log
