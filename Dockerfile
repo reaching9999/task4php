@@ -1,5 +1,10 @@
 FROM php:8.2-apache
 
+# Set environment variables
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
@@ -17,40 +22,43 @@ RUN apt-get update && apt-get install -y \
     zip \
     opcache \
     mbstring \
-    xml
+    xml \
+    ctype \
+    iconv
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
-
-# Set working directory
-WORKDIR /var/www/html
-
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Copy project files
-COPY . .
-
-# Remove Windows-generated composer.lock to avoid platform mismatches
-RUN rm -f composer.lock
-
-# Create var directory (since it is ignored in .dockerignore)
-RUN mkdir -p var
-
-# Install PHP dependencies
-ENV COMPOSER_ALLOW_SUPERUSER=1
-ENV COMPOSER_MEMORY_LIMIT=-1
-RUN composer install --no-dev --optimize-autoloader --no-scripts
-
-# Set permissions
-RUN chown -R www-data:www-data var
 
 # Configure Apache DocumentRoot to public
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf.conf
 
-# Create entrypoint script to run migrations and cache clear on startup
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy composer files first
+COPY composer.json ./
+
+# Remove lock file if it exists to force Linux resolution
+RUN rm -f composer.lock
+
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist --no-progress
+
+# Copy the rest of the application
+COPY . .
+
+# Create var directory
+RUN mkdir -p var/cache var/log
+
+# Set permissions
+RUN chown -R www-data:www-data var
+
+# Create entrypoint script
 RUN echo '#!/bin/bash' > /docker-entrypoint.sh \
     && echo 'php bin/console cache:clear' >> /docker-entrypoint.sh \
     && echo 'php bin/console assets:install public' >> /docker-entrypoint.sh \
@@ -58,7 +66,6 @@ RUN echo '#!/bin/bash' > /docker-entrypoint.sh \
     && echo 'exec apache2-foreground' >> /docker-entrypoint.sh \
     && chmod +x /docker-entrypoint.sh
 
-# Port
 EXPOSE 80
 
 CMD ["/docker-entrypoint.sh"]
